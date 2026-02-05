@@ -2,7 +2,7 @@ pipeline {
   agent {
     docker {
       image 'iamsaikishore/maven-docker-agent:v1'
-      args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
+      args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
     }
   }
   stages {
@@ -15,7 +15,7 @@ pipeline {
     stage('Build and Test') {
       steps {
         sh 'ls -ltr'
-        // build the project and create a JAR file
+        // Build the project inside the subdirectory
         sh 'cd spring-boot-app && mvn clean package'
       }
     }
@@ -32,7 +32,6 @@ pipeline {
     stage('Build and Push Docker Image') {
       environment {
         DOCKER_IMAGE = "iamsaikishore/spring-boot-app:${BUILD_NUMBER}"
-        // DOCKERFILE_LOCATION = "spring-boot-app/Dockerfile"
         REGISTRY_CREDENTIALS = credentials('docker-cred')
       }
       steps {
@@ -47,21 +46,21 @@ pipeline {
     }
     stage('Update Deployment File') {
         environment {
-            GIT_REPO_NAME = "Project3---java-maven-sonar-argocd-k8s"
-            GIT_USER_NAME = "iamsaikishore"
+            GIT_REPO_NAME = "Project-devops"
+            GIT_USER_NAME = "Yahya-maani"
         }
         steps {
             withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
                 sh '''
-                    git config user.email "saikishorepro28@gmail.com"
-                    git config user.name "iamsaikishore"
-                    BUILD_NUMBER=${BUILD_NUMBER}
-                    // sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" spring-boot-app-manifests/deployment.yml
-                    sed -i "19c \        image: iamsaikishore/spring-boot-app:${BUILD_NUMBER}" spring-boot-app-manifests/deployment.yml
-                    // sed -i -e "s/spring-boot-app:*/spring-boot-app:${BUILD_NUMBER}/g" spring-boot-app-manifests/deployment.yml
+                    git config user.email "yahya.maani@example.com"
+                    git config user.name "Yahya-maani"
+                    
+                    # Fix: Use double backslash for Groovy and # for shell comments
+                    sed -i "19c\\        image: iamsaikishore/spring-boot-app:${BUILD_NUMBER}" spring-boot-app-manifests/deployment.yml
+                    
                     git add spring-boot-app-manifests/deployment.yml
                     git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:master
+                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:master
                 '''
             }
         }
